@@ -50,7 +50,7 @@
 
 如果你想在本地环境运行该项目，请按照以下步骤操作：
 
-1. 克隆仓库：
+1.克隆仓库：
    ```bash
    git clone https://github.com/Z-2007/AI-Maintenance-System-2026.git
    ```
