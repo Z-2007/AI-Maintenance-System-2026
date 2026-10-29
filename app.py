@@ -129,22 +129,37 @@ if anomaly_count > 0:
 else:
     st.success("✅ 设备运行状态良好，未检测到异常。")
 
-# ================= 6. 维度一：LLM 大模型诊断模块 =================
+# ================= 6. 维度一：LLM 大模型诊断模块（火山引擎 DeepSeek 版） =================
 if anomaly_count > 0:
     with st.expander("🤖 点击查看 AI 专家诊断建议", expanded=True):
         with st.spinner("AI 专家正在结合设备数据进行分析..."):
-            api_key = os.getenv("ZHIPU_API_KEY", "")
-            if not api_key:
-                st.warning("⚠️ 未配置大模型 API Key（请在云端 Secrets 中配置 ZHIPU_API_KEY）。")
+            # 从 Streamlit Secrets 读取火山引擎的 Key 和接入点 ID
+            ark_api_key = os.getenv("ARK_API_KEY", "")
+            ark_endpoint_id = os.getenv("ARK_ENDPOINT_ID", "")
+            
+            if not ark_api_key or not ark_endpoint_id:
+                st.warning("⚠️ 未配置火山引擎 API Key 或接入点 ID（请在云端 Secrets 中配置 ARK_API_KEY 和 ARK_ENDPOINT_ID）。")
             else:
                 prompt = f"你是一个资深工业设备维修专家。当前设备已运行 {engine_data['cycle'].max() if 'cycle' in engine_data else len(engine_data)} 个周期，预测剩余寿命约 {predicted_rul} 周期，AI 检测到 {anomaly_count} 次异常波动。请用不超过 60 个字，给出一段专业的维修建议。"
-                url = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
-                headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-                data = {"model": "glm-4.7-flash", "messages": [{"role": "user", "content": prompt}]}
+                
+                # 火山引擎方舟的接口地址
+                url = "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
+                headers = {
+                    "Authorization": f"Bearer {ark_api_key}",
+                    "Content-Type": "application/json"
+                }
+                data = {
+                    "model": ark_endpoint_id,  # 这里填你的 ep- 开头的接入点 ID
+                    "messages": [{"role": "user", "content": prompt}],
+                    "max_tokens": 100
+                }
+                
                 try:
-                    response = requests.post(url, headers=headers, json=data, timeout=10)
+                    response = requests.post(url, headers=headers, json=data, timeout=15)
                     if response.status_code == 200:
                         result = response.json()['choices'][0]['message']['content']
                         st.info(f"**AI 专家诊断：** {result}")
+                    else:
+                        st.error(f"火山引擎接口请求失败（状态码 {response.status_code}），请检查 API Key 和接入点 ID。")
                 except Exception as e:
                     st.error("网络超时或接口异常，请检查云端网络。")
