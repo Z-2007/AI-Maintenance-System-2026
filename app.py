@@ -15,6 +15,7 @@ st.sidebar.header("🕹️ 控制面板")
 
 # 【维度三】数据上传接口
 st.sidebar.markdown("### 📁 数据接入")
+st.sidebar.caption("🔒 隐私保护：上传的数据仅在当前会话内存中处理，不会持久化存储。")
 uploaded_file = st.sidebar.file_uploader("上传传感器数据 (CSV/TXT格式)", type=['csv', 'txt'])
 st.sidebar.divider()
 
@@ -27,31 +28,39 @@ columns = ['engine_id', 'cycle', 'op_setting_1', 'op_setting_2', 'op_setting_3']
 @st.cache_data
 def load_data(file):
     if file is not None:
-        try:
-            raw_df = pd.read_csv(file)
-            if raw_df.empty:
-                st.warning("⚠️ 警告：您上传的文件是空的，已自动切换回默认 NASA 数据集。")
-                return pd.read_csv('train_FD001.txt', sep=r'\s+', names=columns)
-            
-            if 'sensor_2' not in raw_df.columns:
-                numeric_cols = raw_df.select_dtypes(include=['float64', 'int64']).columns
-                if len(numeric_cols) < 2:
-                    st.warning("⚠️ 警告：文件格式不符合工业传感器标准，已自动切换回默认数据集。")
+        with st.spinner("⏳ 正在解析工业数据，请稍候..."):
+            try:
+                # 限制读取前 10000 行，防止云端内存溢出 (OOM)
+                raw_df = pd.read_csv(file, nrows=10000)
+                
+                if raw_df.empty:
+                    st.warning("⚠️ 警告：您上传的文件是空的，已自动切换回默认 NASA 数据集。")
                     return pd.read_csv('train_FD001.txt', sep=r'\s+', names=columns)
                 
-                df_new = pd.DataFrame()
-                df_new['cycle'] = range(1, len(raw_df) + 1)
-                for i, col in enumerate(numeric_cols[:5]):
-                    df_new[f'sensor_{i+2}'] = raw_df[col]
-                st.toast("✅ 自定义数据解析成功！", icon="📁")
-                return df_new
-            else:
-                st.toast("✅ NASA 格式数据解析成功！", icon="📁")
-                return raw_df
+                # 如果用户真的传了超大文件，提示一下
+                if len(raw_df) == 10000:
+                    st.info("💡 提示：由于数据量较大，系统已自动提取前 10,000 行进行 AI 分析，确保运行流畅。")
                 
-        except Exception as e:
-            st.warning("⚠️ 警告：文件解析失败！请确保上传的是标准的 CSV/TXT 数据文件。已自动切换回默认数据集。")
-            return pd.read_csv('train_FD001.txt', sep=r'\s+', names=columns)
+                # 检查有没有标准的传感器列
+                if 'sensor_2' not in raw_df.columns:
+                    numeric_cols = raw_df.select_dtypes(include=['float64', 'int64']).columns
+                    if len(numeric_cols) < 2:
+                        st.warning("⚠️ 警告：文件格式不符合工业传感器标准，已自动切换回默认数据集。")
+                        return pd.read_csv('train_FD001.txt', sep=r'\s+', names=columns)
+                    
+                    df_new = pd.DataFrame()
+                    df_new['cycle'] = range(1, len(raw_df) + 1)
+                    for i, col in enumerate(numeric_cols[:5]):
+                        df_new[f'sensor_{i+2}'] = raw_df[col]
+                    st.toast("✅ 自定义数据解析成功！", icon="📁")
+                    return df_new
+                else:
+                    st.toast("✅ NASA 格式数据解析成功！", icon="📁")
+                    return raw_df
+                    
+            except Exception as e:
+                st.warning("⚠️ 警告：文件解析失败！请确保上传的是标准的 CSV/TXT 数据文件。已自动切换回默认数据集。")
+                return pd.read_csv('train_FD001.txt', sep=r'\s+', names=columns)
     else:
         return pd.read_csv('train_FD001.txt', sep=r'\s+', names=columns)
 
