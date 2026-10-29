@@ -25,7 +25,7 @@ contamination = st.sidebar.slider("AI 报警灵敏度", min_value=0.01, max_valu
 # ================= 3. 数据加载与超级防崩溃清洗 =================
 columns = ['engine_id', 'cycle', 'op_setting_1', 'op_setting_2', 'op_setting_3'] + [f'sensor_{i}' for i in range(1, 22)]
 
-@st.cache_data
+# 注意：这里去掉了 @st.cache_data，彻底修复刷新报错的问题
 def load_data(file):
     if file is not None:
         with st.spinner("⏳ 正在解析工业数据，请稍候..."):
@@ -37,11 +37,9 @@ def load_data(file):
                     st.warning("⚠️ 警告：您上传的文件是空的，已自动切换回默认 NASA 数据集。")
                     return pd.read_csv('train_FD001.txt', sep=r'\s+', names=columns)
                 
-                # 如果用户真的传了超大文件，提示一下
                 if len(raw_df) == 10000:
                     st.info("💡 提示：由于数据量较大，系统已自动提取前 10,000 行进行 AI 分析，确保运行流畅。")
                 
-                # 检查有没有标准的传感器列
                 if 'sensor_2' not in raw_df.columns:
                     numeric_cols = raw_df.select_dtypes(include=['float64', 'int64']).columns
                     if len(numeric_cols) < 2:
@@ -110,7 +108,7 @@ col3.metric("预测剩余寿命 (RUL)", f"{predicted_rul} 周期", delta="临近
 st.divider()
 
 # 画图（全面替换为英文，彻底解决云端方块乱码）
-st.subheader(f"运行状态监测图 (当前分析: {'外部上传数据' if uploaded_file else f'设备 {engine_id}'})")
+st.subheader(f"运行状态监测图 (当前分析: {'外部上传数据' if uploaded_file else f'NASA演示数据集 - 设备 {engine_id}'})")
 fig, ax = plt.subplots(figsize=(12, 5))
 normal_data = engine_data[engine_data['anomaly'] == 1]
 anomaly_data = engine_data[engine_data['anomaly'] == -1]
@@ -129,7 +127,7 @@ if anomaly_count > 0:
 else:
     st.success("✅ 设备运行状态良好，未检测到异常。")
 
-# ================= 6. 维度一：LLM 大模型诊断模块（火山引擎 DeepSeek 版） =================
+# ================= 6. 维度一：LLM 大模型诊断模块（火山引擎版） =================
 if anomaly_count > 0:
     with st.expander("🤖 点击查看 AI 专家诊断建议", expanded=True):
         with st.spinner("AI 专家正在结合设备数据进行分析..."):
@@ -138,7 +136,7 @@ if anomaly_count > 0:
             ark_endpoint_id = os.getenv("ARK_ENDPOINT_ID", "")
             
             if not ark_api_key or not ark_endpoint_id:
-                st.warning("⚠️ 未配置火山引擎 API Key 或接入点 ID（请在云端 Secrets 中配置 ARK_API_KEY 和 ARK_ENDPOINT_ID）。")
+                st.warning("⚠️ 未配置大模型 API Key 或接入点 ID（请在云端 Secrets 中配置 ARK_API_KEY 和 ARK_ENDPOINT_ID）。")
             else:
                 prompt = f"你是一个资深工业设备维修专家。当前设备已运行 {engine_data['cycle'].max() if 'cycle' in engine_data else len(engine_data)} 个周期，预测剩余寿命约 {predicted_rul} 周期，AI 检测到 {anomaly_count} 次异常波动。请用不超过 60 个字，给出一段专业的维修建议。"
                 
