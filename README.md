@@ -52,7 +52,7 @@
 
 1. 克隆仓库：
    ```bash
-   git clone https://github.com/Z-2007/AI-Maintenance-System-test.git
+   [git clone https://github.com/Z-2007/AI-Maintenance-System-test.git](https://github.com/Z-2007/AI-Maintenance-System-2026.git)
    ```
 2.安装依赖：
 
