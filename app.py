@@ -149,7 +149,7 @@ if anomaly_count > 0:
                 data = {
                     "model": ark_endpoint_id,  # 这里填你的 ep- 开头的接入点 ID
                     "messages": [{"role": "user", "content": prompt}],
-                    "max_tokens": 100
+                    "max_tokens": 500
                 }
                 
                 try:
