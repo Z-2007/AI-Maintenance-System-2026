@@ -153,7 +153,7 @@ if anomaly_count > 0:
                 }
                 
                 try:
-                    response = requests.post(url, headers=headers, json=data, timeout=15)
+                    response = requests.post(url, headers=headers, json=data, timeout=30)
                     if response.status_code == 200:
                         result = response.json()['choices'][0]['message']['content']
                         st.info(f"**AI 专家诊断：** {result}")
