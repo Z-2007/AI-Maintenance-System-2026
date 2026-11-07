@@ -21,7 +21,8 @@
 
 ## 📸 系统界面展示
 
-<img width="959" height="471" alt="image" src="https://github.com/user-attachments/assets/89f33475-3b50-4e9e-be48-d2ea46561de9" />
+<img width="959" height="473" alt="image" src="https://github.com/user-attachments/assets/4d49bb2c-ffaa-44cb-b2ff-ec28d6980de5" />
+
 
 ---
 
@@ -41,7 +42,7 @@
 *   **前端/部署**：Streamlit (构建交互式 Web 界面)
 *   **数据处理**：Pandas, NumPy
 *   **AI 算法**：Scikit-learn (Isolation Forest)
-*   **大模型**：智谱 GLM-4.7-Flash
+*   **大模型**：deepseek-v4-1-flash
 *   **可视化**：Matplotlib
 
 ---
